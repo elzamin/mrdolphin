@@ -1,0 +1,25 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string.h>
+#include "TCHAR.h"
+#include "pdh.h"
+using namespace std;
+
+int main()
+{
+	ifstream stat_file("\\Processor(_Total)\\% Processor Time");
+	
+	if (!stat_file.is_open())
+	{
+		cout << "Unable to open" << std::endl;
+		return 0;
+	}
+	
+	char tmp[128];
+	stat_file >> tmp;
+	cout << tmp << endl;
+	
+	system("pause");
+	return 0;
+}
