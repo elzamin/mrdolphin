@@ -1,0 +1,72 @@
+#include <QtGui>
+#include <iostream>
+#include <fstream>
+#include <pwd.h>
+#include <unistd.h>
+#include <sys/sysinfo.h>
+#include <vector>
+
+using namespace std;
+
+class Info : public QWidget
+{
+	Q_OBJECT
+
+public:
+	
+  explicit Info(QWidget *parent = 0);
+
+private:
+	
+  QLabel       * hostname;
+	QLabel       * user;
+	QLabel       * uptime;
+	QLabel       * proc;
+	QLabel       * freq;
+	QLabel       * cpuload;
+	QLabel       * mem;
+	QLabel       * memload;
+	QProgressBar * cpubar;
+	QProgressBar * membar;
+	QVBoxLayout  * layout;
+	QHBoxLayout  * hlayout;
+	vector<float> readCpuStats();
+	int getCpuLoad(double dt);
+	
+  public slots:
+  
+	void update();
+  
+};
+
+Info::Info(QWidget *parent) :
+QWidget(parent)
+{
+	hostname = new QLabel("Hostname: ");
+	user = new QLabel("Пользователь: ");
+	uptime = new QLabel("Uptime: ");
+	proc = new QLabel("Процессор: ");
+	freq = new QLabel("Частота:");
+	cpuload = new QLabel("Загрузка процессора: ");
+	mem = new QLabel("Оперативная память: ");
+	memload = new QLabel("Используемая оперативная память: ");
+	cpubar = new QProgressBar;
+	membar = new QProgressBar;
+	layout = new QVBoxLayout;
+	hlayout = new QHBoxLayout;
+
+	cpubar->setMaximumHeight(21); membar->setMaximumHeight(21);
+	hlayout->addWidget(cpuload); hlayout->addWidget(cpubar);
+	layout->addWidget(hostname); layout->addWidget(user);
+	layout->addWidget(uptime); layout->addWidget(proc);
+	layout->addWidget(freq); layout->addLayout(hlayout);
+	layout->addWidget(mem); layout->addWidget(memload);
+	layout->addWidget(membar); setLayout(layout);
+
+	update();
+
+	QTimer *timer = new QTimer;
+	connect(timer, SIGNAL(timeout()), this, SLOT(update()));
+	timer->start(2000);
+}
+
