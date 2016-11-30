@@ -166,3 +166,113 @@ vector<float> Info::readCpuStats()
 	stat_file.close();
 	return ret;
 }
+
+class ProcessTable : public QWidget
+{
+	Q_OBJECT
+public:
+	explicit ProcessTable(QWidget *parent = 0);
+private:
+	QTableWidget * table;
+	QHBoxLayout* hlayout;
+	QPushButton* button;
+	QVBoxLayout* layout;
+	public slots:
+	void update();
+	void kill();
+};
+
+ProcessTable::ProcessTable(QWidget *parent) :
+QWidget(parent)
+{
+	hlayout = new QHBoxLayout;
+	button = new QPushButton("Завершить");
+	button->setToolTip("Для завершения процесса вы должны выделить его PID и нажать на кнопку \"Завершить\"");
+	connect(button, SIGNAL(clicked()), this, SLOT(kill()));
+	hlayout->addStretch();
+	hlayout->addWidget(button);
+	layout = new QVBoxLayout;
+	table = new QTableWidget;
+	update();
+	layout->addWidget(table);
+	layout->addLayout(hlayout);
+	this->setLayout(layout);
+	QTimer *timer = new QTimer;
+	connect(timer, SIGNAL(timeout()), this, SLOT(update()));
+	timer->start(4000);
+}
+
+void ProcessTable::update()
+{
+	table->setColumnCount(2);
+	table->setRowCount(0);
+	QStringList list;
+	list << "Name" << "PID";
+	table->setHorizontalHeaderLabels(list);
+	QDir * dir = new QDir("/proc");
+	list = dir->entryList(QStringList("*"), QDir::AllDirs);
+	foreach(QString str, list) {
+		if (str.toInt()) {
+			ifstream stream;
+
+			stream.open("/proc/" + str.toAscii() + "/comm");
+			string s; getline(stream, s);
+			int lastRow = table->rowCount();
+			QString icon = "/usr/share/icons/hicolor/32x32/apps/" + QString::fromStdString(s) + ".png";
+			QFile file(icon);
+			table->insertRow(lastRow);
+			table->setColumnWidth(0, 150);
+
+			if (!file.exists()) {
+				icon = ":/binary.png";
+			}
+			table->setItem(lastRow, 0, new QTableWidgetItem(QPixmap(icon), QString::fromStdString(s)));
+			table->setItem(lastRow, 1, new QTableWidgetItem(str));
+		}
+		else {
+			continue;
+		}
+	}
+}
+
+void ProcessTable::kill()
+{
+	QList<QTableWidgetItem*> list = table->selectedItems();
+	QTableWidgetItem* item = list.value(0);
+	QString str = item->text();
+	QProcess::execute("kill", QStringList() << str);
+	update();
+}
+
+class SystemMonitor : public QWidget
+{
+	Q_OBJECT
+public:
+	explicit SystemMonitor(QWidget *parent = 0);
+};
+
+SystemMonitor::SystemMonitor(QWidget *parent) :
+QWidget(parent)
+{
+	QTabWidget * tab = new QTabWidget;
+	Info* info = new Info;
+	ProcessTable* pt = new ProcessTable;
+	tab->addTab(info, "Информация о системе");
+	tab->addTab(pt, "Процессы");
+	QVBoxLayout * layout = new QVBoxLayout;
+	layout->addWidget(tab);
+	this->setLayout(layout);
+	this->show();
+}
+
+int main(int argc, char** argv)
+{
+	QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
+	QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
+	QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
+	QApplication app(argc, argv);
+	QStyle * style = QStyleFactory::create("Cleanlooks");
+	app.setStyle(style);
+	SystemMonitor sys;
+	return app.exec();
+}
