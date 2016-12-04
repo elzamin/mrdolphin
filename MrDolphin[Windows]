@@ -1,0 +1,79 @@
+#include <Windows.h>
+#include <gdiplus.h>
+#pragma comment(lib, "user32.lib")
+#pragma comment(lib, "gdiplus.lib")
+
+using namespace Gdiplus;
+
+#define widht 640
+#define height 480
+
+
+VOID OnPaint(HDC hdc)
+{
+	Graphics    graphics(hdc);
+	SolidBrush  brush(Color(255, 0, 0, 255));
+	FontFamily  fontFamily(L"Times New Roman");
+	Font        font(&fontFamily, 24, FontStyleRegular, UnitPixel);
+	PointF      pointF(10.0f, 20.0f);
+
+	graphics.DrawString(L"Hardware information : \n  OEM ID: %u\n  Number of processors: %u\n  Page size: %u\n  Processor type: %u\n  Minimum application address: %lx\n  Maximum application address: %lx\nActive processor mask: %u\n", -1, &font, pointF, &brush);
+}
+
+
+LRESULT CALLBACK WindowProc(HWND hWnd, UINT UMsg, WPARAM wParam, LPARAM lParam);
+int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+{
+	WNDCLASSEX windowClass;
+	HWND hWnd;
+	MSG uMsg;
+	GdiplusStartupInput gdiplusStartupInput;
+	ULONG_PTR gdiplusToken;
+	SYSTEM_INFO info;
+
+	GetSystemInfo(&info);
+
+	memset(&windowClass, 0, sizeof(WNDCLASSEXW));
+	windowClass.cbSize = sizeof(WNDCLASSEX);
+	windowClass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+	windowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
+	windowClass.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+	windowClass.hInstance = hInstance;
+	windowClass.lpfnWndProc = WindowProc;
+	windowClass.lpszClassName = "Simple Window";
+	RegisterClassEx(&windowClass);
+	GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
+	hWnd = CreateWindow(windowClass.lpszClassName, "CLAY_HACK TRAINER", WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX, (GetSystemMetrics(SM_CXSCREEN) - widht) / 2, (GetSystemMetrics(SM_CYSCREEN) - height) / 2, widht, height, NULL, NULL, NULL, NULL);
+
+	ShowWindow(hWnd, nCmdShow);
+	while (GetMessage(&uMsg, hWnd, NULL, NULL))
+	{
+		TranslateMessage(&uMsg);
+		DispatchMessage(&uMsg);
+	}
+
+	GdiplusShutdown(gdiplusToken);
+
+	return uMsg.wParam;
+}
+LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	HDC hDC;
+	PAINTSTRUCT ps;
+	switch (uMsg)
+	{
+	case WM_CLOSE:
+		ExitProcess(0);
+		break;
+	case WM_PAINT:;
+		hDC = BeginPaint(hWnd, &ps);
+		OnPaint(hDC);
+		EndPaint(hWnd, &ps);
+		break;
+	default:
+		return DefWindowProc(hWnd, uMsg, wParam, lParam);
+
+		return DefWindowProc(hWnd, uMsg, wParam, lParam);
+	}
+}
